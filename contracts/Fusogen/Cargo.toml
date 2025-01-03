@@ -1,6 +1,6 @@
 [package]
 name = "fusogen"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["somthn0somthn <lpmaho@gmail.com>"]
 edition = "2021"
 homepage = ""
@@ -26,13 +26,13 @@ required-features = ["daemon-bin"]
 [features]
 default = ["export"]
 export = []
-daemon-bin = [
-  "cw-orch/daemon",
-  "dep:clap",
-  "dep:abstract-client",
-  "dep:dotenv",
-  "dep:env_logger",
-]
+#daemon-bin = [
+#  "cw-orch/daemon",
+#  "dep:clap",
+#  "dep:abstract-client",
+#  "dep:dotenv",
+#  "dep:env_logger",
+# ]
 schema = ["abstract-app/schema"]
 
 [dependencies]
@@ -44,19 +44,90 @@ thiserror = { workspace = true }
 schemars = { workspace = true }
 cw-asset = { workspace = true }
 abstract-app = { workspace = true }
+# uncertain if cargo can pull this version or it needs to be 
+# held locally, this is not "0.26.0" like in ping-pong
+abstract-ibc-client = { version = "0.24.1", default-features = false }
 const_format = { workspace = true }
 
 # Dependencies for interface
 cw-orch = { workspace = true }
-abstract-interface = { workspace = true }
+abstract-interface = { workspace = true, features = ["daemon"] }
 
 # Dependencies for bins
 clap = { workspace = true, optional = true, features = ["derive"] }
-abstract-client = { workspace = true, optional = true }
-dotenv = { workspace = true, optional = true }
-env_logger = { workspace = true, optional = true }
+dotenv = "0.15.0"
+env_logger = "0.11"
 
 [dev-dependencies]
-fusogen = { workspace = true }
-abstract-client = { workspace = true }
-abstract-app = { workspace = true, features = ["test-utils"] }
+abstract-client = { workspace = true, features = ["interchain"] }
+cw-orch = { workspace = true, features = ["daemon"] }
+# cw-orch-interchain = { workspace = true, features = ["daemon"] }
+cw-orch-polytone = { package = "abstract-cw-orch-polytone", version = "6.0.0" }
+semver.workspace = true
+
+
+# ## ORIGININAL TOML BELOW
+
+# [package]
+# name = "fusogen"
+# version = "0.1.0"
+# authors = ["somthn0somthn <lpmaho@gmail.com>"]
+# edition = "2021"
+# homepage = ""
+# documentation = ""
+# repository = ""
+# license = "GPL-3.0-or-later"
+# keywords = ["cosmos", "cosmwasm", "abstractsdk"]
+# resolver = "2"
+
+# exclude = ["contract.wasm", "hash.txt"]
+
+# [lib]
+# crate-type = ["cdylib", "rlib"]
+
+# [[bin]]
+# name = "schema"
+# required-features = ["schema"]
+
+# [[bin]]
+# name = "publish"
+# required-features = ["daemon-bin"]
+
+# [features]
+# default = ["export"]
+# export = []
+# daemon-bin = [
+#   "cw-orch/daemon",
+#   "dep:clap",
+#   "dep:abstract-client",
+#   "dep:dotenv",
+#   "dep:env_logger",
+# ]
+# schema = ["abstract-app/schema"]
+
+# [dependencies]
+# cosmwasm-std = { workspace = true }
+# cosmwasm-schema = { workspace = true }
+# cw-controllers = { workspace = true }
+# cw-storage-plus = { workspace = true }
+# thiserror = { workspace = true }
+# schemars = { workspace = true }
+# cw-asset = { workspace = true }
+# abstract-app = { workspace = true }
+# abstract-ibc-client = { version = "0.26.0", default-features = false }
+# const_format = { workspace = true }
+
+# # Dependencies for interface
+# cw-orch = { workspace = true }
+# abstract-interface = { workspace = true }
+
+# # Dependencies for bins
+# clap = { workspace = true, optional = true, features = ["derive"] }
+# abstract-client = { workspace = true, optional = true }
+# dotenv = { workspace = true, optional = true }
+# env_logger = { workspace = true, optional = true }
+
+# [dev-dependencies]
+# fusogen = { workspace = true }
+# abstract-client = { workspace = true }
+# abstract-app = { workspace = true, features = ["test-utils"] }

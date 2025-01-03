@@ -1,21 +1,43 @@
-use abstract_app::std::ibc::ModuleIbcInfo;
-use cosmwasm_std::{Binary, DepsMut, Env, Response, from_json};
+use abstract_app::{
+    sdk::AbstractResponse,
+    std::ibc::ModuleIbcInfo,
+};
+use cosmwasm_std::{ensure_eq, from_json, Binary, DepsMut, Env, Response};
 
 use crate::{
     contract::{
         Fusogen, FusogenResult
     },
-    msg::IbcMsg,
+    msg::FusogenIbcMsg,
+    error::FusogenError,
+    state::CLAIMED_LOCKS,
 };
 
 pub fn receive_module_ibc(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
-    _module: Fusogen,
-    _source_module: ModuleIbcInfo,
+    module: Fusogen,
+    source_module: ModuleIbcInfo,
     msg: Binary,
-) -> FusogenResult {
-    let _msg: IbcMsg = from_json(&msg)?;
-    // do something with received _msg
-    Ok(Response::new())
+) -> FusogenResult<Response> {
+    let this_module_info = module.module_info()?;
+    ensure_eq!(
+        source_module.module,
+        this_module_info,
+        FusogenError::UnauthorizedModule {
+            source_module: source_module.module.clone()
+        }
+    );
+
+    //TODO :: connect error handling here?
+    let ibc_msg: FusogenIbcMsg = from_json(msg)?;
+
+    let user_addr = deps.api.addr_validate(&ibc_msg.user_addr)?;
+    CLAIMED_LOCKS.save(deps.storage, &user_addr, &())?;
+
+    let resp = module.response("receive_module_ibc")
+        .add_attribute("action", "receive_module_ibc")
+        .add_attribute("user_addr", user_addr.to_string());
+
+    Ok(resp)
 }

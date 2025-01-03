@@ -1,13 +1,14 @@
 use crate::{
-    contract::{
-        Fusogen, FusogenResult
-    },
-    msg::FusogenExecuteMsg,
-    state::{CONFIG, COUNT},
+    contract::{Fusogen, FusogenResult},
+    msg::{FusogenExecuteMsg, FusogenIbcMsg, FusogenCallbackMsg},
+    state::CONFIG,
 };
-
-use abstract_app::traits::AbstractResponse;
-use cosmwasm_std::{DepsMut, Env, MessageInfo};
+use abstract_app::{
+    sdk::{IbcClient, IbcInterface},
+    std::ibc::Callback,
+    traits::AbstractResponse,
+};
+use cosmwasm_std::{CosmosMsg, DepsMut, Env, MessageInfo};
 
 pub fn execute_handler(
     deps: DepsMut,
@@ -17,30 +18,42 @@ pub fn execute_handler(
     msg: FusogenExecuteMsg,
 ) -> FusogenResult {
     match msg {
-        FusogenExecuteMsg::UpdateConfig {} => update_config(deps, env, info, module),
-        FusogenExecuteMsg::Increment {} => increment(deps, module),
-        FusogenExecuteMsg::Reset { count } => reset(deps, env, info, count, module),
+        FusogenExecuteMsg::ClaimLock {} => claim_lock(deps, env, info, module),
     }
 }
 
-/// Update the configuration of the app
-fn update_config(deps: DepsMut, env: Env, msg_info: MessageInfo, module: Fusogen) -> FusogenResult {
-    // Only the admin should be able to call this
-    module.admin.assert_admin(deps.as_ref(), &env, &msg_info.sender)?;
-    let mut _config = CONFIG.load(deps.storage)?;
+pub(crate) fn claim_lock(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    module: Fusogen,
+) -> FusogenResult {
+    //TODO :: attach error handling here?
+    let config = CONFIG.load(deps.storage)?;
 
-    Ok(module.response("update_config"))
-}
+    let fusogen_msg = FusogenIbcMsg {
+        user_addr: info.sender.to_string(),
+    };
 
-fn increment(deps: DepsMut, module: Fusogen) -> FusogenResult {
-    COUNT.update(deps.storage, |count| FusogenResult::Ok(count + 1))?;
+    let callback = Callback::new(&FusogenCallbackMsg::AcknowledgedLock { 
+        user_addr: info.sender.to_string(),
+        success: true,
+    })?;
 
-    Ok(module.response("increment"))
-}
+    let self_module_info = module.module_info()?;
+    //this call is different from ping-pong, taking an &env arg, see version diffs?
+    let ibc_client: IbcClient<_> = module.ibc_client(deps.as_ref(), &env);
+    
+    let ibc_action: CosmosMsg = ibc_client.module_ibc_action(
+        config.destination_chain,
+        self_module_info, 
+        &fusogen_msg,
+        Some(callback)
+    )?;
 
-fn reset(deps: DepsMut, env: Env, info: MessageInfo, count: i32, module: Fusogen) -> FusogenResult {
-    module.admin.assert_admin(deps.as_ref(), &env, &info.sender)?;
-    COUNT.save(deps.storage, &count)?;
-
-    Ok(module.response("reset"))
+    Ok(module
+        .response("claim_lock")
+        .add_attribute("action", "claim_lock")
+        .add_attribute("claimer", info.sender)
+        .add_message(ibc_action))
 }

@@ -1,5 +1,6 @@
 use abstract_app::sdk::AbstractSdkError;
 use abstract_app::std::AbstractError;
+use abstract_app::objects::module::ModuleInfo;
 use abstract_app::AppError;
 use cosmwasm_std::StdError;
 use cw_asset::AssetError;
@@ -25,4 +26,10 @@ pub enum FusogenError {
 
     #[error("{0}")]
     DappError(#[from] AppError),
+
+    #[error("Claim verification failed for user {user}: {reason}")]
+    ClaimVerificationFailed { user: String, reason: String },
+
+    #[error("Unauthorized module: {source_module:?}")]
+    UnauthorizedModule { source_module: ModuleInfo },
 }
