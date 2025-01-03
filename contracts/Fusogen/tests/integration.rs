@@ -1,12 +1,13 @@
 use fusogen::{
     contract::interface::FusogenInterface,
     msg::{
-        ConfigResponse, CountResponse, FusogenExecuteMsgFns, FusogenInstantiateMsg, FusogenQueryMsgFns,
+        ConfigResponse, FusogenExecuteMsgFns, FusogenInstantiateMsg, FusogenQueryMsgFns,
+        HasClaimedResponse,
     },
     FusogenError, FUSOGEN_NAMESPACE,
 };
 
-use abstract_app::objects::namespace::Namespace;
+use abstract_app::objects::{namespace::Namespace, TruncatedChainId};
 use abstract_client::{AbstractClient, Application, Environment};
 use cosmwasm_std::coins;
 use cw_controllers::AdminError;
@@ -39,9 +40,12 @@ impl TestEnv<MockBech32> {
             .publisher()?;
         publisher.publish_app::<FusogenInterface<_>>()?;
 
-        let app = publisher
-            .account()
-            .install_app::<FusogenInterface<_>>(&FusogenInstantiateMsg { count: 0 }, &[])?;
+        let app = publisher.account().install_app::<FusogenInterface<_>>(
+            &FusogenInstantiateMsg {
+                source_chain: TruncatedChainId::from_chain_id("juno-1"),
+            },
+            &[],
+        )?;
 
         Ok(TestEnv {
             abs: abs_client,
@@ -56,10 +60,16 @@ fn successful_install() -> anyhow::Result<()> {
     let app = env.app;
 
     let config = app.config()?;
-    assert_eq!(config, ConfigResponse {});
+
+    assert_eq!(config, ConfigResponse {
+        source_chain: TruncatedChainId::from_chain_id("juno-1"),
+        destination_chain: TruncatedChainId::from_chain_id("xion-1"),
+    });
+    
     Ok(())
 }
 
+/*
 #[test]
 fn successful_increment() -> anyhow::Result<()> {
     let env = TestEnv::setup()?;
@@ -129,3 +139,4 @@ fn balance_added() -> anyhow::Result<()> {
     assert_eq!(balances, add_balance);
     Ok(())
 }
+ */

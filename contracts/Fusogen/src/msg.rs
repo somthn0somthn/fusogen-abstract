@@ -9,7 +9,8 @@ abstract_app::app_msg_types!(Fusogen, FusogenExecuteMsg, FusogenQueryMsg);
 #[cosmwasm_schema::cw_serde]
 pub struct FusogenInstantiateMsg {
     pub source_chain: TruncatedChainId,
-    pub destination: TruncatedChainId,
+    //destination_chain should be hard-coded to XION
+    //pub destination_chain: TruncatedChainId,
 }
 
 /// App execute messages

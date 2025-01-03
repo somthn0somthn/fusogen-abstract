@@ -62,9 +62,7 @@ impl<Chain: cw_orch::environment::CwEnv> abstract_app::abstract_interface::Depen
     }
 }
 
-//CONT :: update error.rs
-
-//CONT :: deal with abstract-ib
+//CONT :: re-evaluate the install section in contract.rs 
 
 //CONT :: pull over most of ping-pong functionality, but with minor changes
 //     -- to incorporate placeholder values signifying token locking and minting
