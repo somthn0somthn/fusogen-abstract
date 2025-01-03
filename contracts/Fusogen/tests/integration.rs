@@ -20,33 +20,30 @@ struct TestEnv<Env: CwEnv> {
 }
 
 impl TestEnv<MockBech32> {
-    /// Set up the test environment with an Account that has the App installed
     fn setup() -> anyhow::Result<TestEnv<MockBech32>> {
-        // Create a sender and mock env
         let mock = MockBech32::new("mock");
         let sender = mock.sender_addr();
         let namespace = Namespace::new(FUSOGEN_NAMESPACE)?;
-
-        // You can set up Abstract with a builder.
+    
         let abs_client = AbstractClient::builder(mock).build_mock()?;
-        // The app supports setting balances for addresses and configuring ANS.
         abs_client.set_balance(&sender, &coins(123, "ucosm"))?;
-
-        // Publish the app
+    
         let publisher = abs_client
             .account_builder()
             .namespace(namespace)
             .build()?
             .publisher()?;
         publisher.publish_app::<FusogenInterface<_>>()?;
-
-        let app = publisher.account().install_app::<FusogenInterface<_>>(
+    
+        // Install app with dependencies
+        let app = publisher.account().install_app_with_dependencies::<FusogenInterface<_>>(
             &FusogenInstantiateMsg {
                 source_chain: TruncatedChainId::from_chain_id("juno-1"),
             },
+            Empty {},
             &[],
         )?;
-
+    
         Ok(TestEnv {
             abs: abs_client,
             app,
